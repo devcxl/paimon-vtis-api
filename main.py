@@ -46,6 +46,7 @@ try:
     VitsHistory.create_table()
     User.create_table()
     user_total = User.total()
+    print(user_total)
     if user_total == 0:
         set_token = uuid.uuid4().hex
         insert=User()
@@ -56,7 +57,7 @@ except Exception as e:
     pass
 
 app = FastAPI()
-
+audio_path ='paimon.wav'
 
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
@@ -77,14 +78,14 @@ async def paimon(content: str = '你好，我是派蒙。', speed: float = 1.0, 
         history.user_id = user.id
         history.content = content
         history.save()
-        audio_path ='paimon.wav'
+        
         stn_tst = get_text(content, hps)
         with torch.no_grad():
             x_tst = stn_tst.cpu().unsqueeze(0)
             x_tst_lengths = torch.LongTensor([stn_tst.size(0)]).cpu()
             audio = net_g.infer(x_tst, x_tst_lengths, noise_scale=.667, noise_scale_w=0.8,
                                 length_scale=speed)[0][0, 0].data.cpu().float().numpy()
-        del stn_tst, x_tst, x_tst_lengths,history,audio_path,user
+        del stn_tst, x_tst, x_tst_lengths,history,user
         sf.write(audio_path, audio, samplerate=hps.data.sampling_rate)
         return FileResponse(audio_path)
     else:
