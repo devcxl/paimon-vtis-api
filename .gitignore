@@ -1,0 +1,10 @@
+.env/
+**/__pycache__
+*.pkl
+*.sqlite
+config.json
+dist/
+build/
+emoji/
+*.sqlite
+*.wav
