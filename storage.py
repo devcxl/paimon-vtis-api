@@ -98,7 +98,7 @@ class Model:
     @classmethod
     def total(cls, where='1=1', params=None):
         sql = f"""SELECT count(1) FROM {cls.__name__} WHERE {where}"""
-        return cls.db.total(sql)
+        return cls.db.total(sql,params)
 
     @classmethod
     def fetch_all(cls, where='1=1', params=None):
@@ -123,7 +123,6 @@ class VitsHistory(Model):
 
 class User(Model):
     access_token = "TEXT"
-    password = "TEXT"
 
 
 if __name__ == "__main__":

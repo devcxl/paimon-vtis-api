@@ -1,0 +1,8 @@
+.env/
+**/__pycache__
+*.sqlite
+dist/
+build/
+emoji/
+*.sqlite
+*.wav

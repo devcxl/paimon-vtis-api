@@ -13,7 +13,7 @@ from text.symbols import symbols
 from text import text_to_sequence
 import time
 from typing import Annotated
-
+import uuid
 
 def get_text(text, hps):
     text_norm = text_to_sequence(text, hps.data.text_cleaners)
@@ -28,7 +28,7 @@ def calculate_md5(text):
     return md5_hash.hexdigest()
 
 
-hps = utils.get_hparams_from_file("biaobei_base.json")
+hps = utils.get_hparams_from_file("config/biaobei_base.json")
 
 net_g = SynthesizerTrn(
     len(symbols),
@@ -45,12 +45,13 @@ Model.initialize(db)
 try:
     VitsHistory.create_table()
     User.create_table()
-
-    insert=User()
-    insert.access_token = 'fcd30694b0184b68af2e1cd38f5245db'
-    insert.password = 'fcd30694b0184b68af2e1cd38f5245db'
-    insert.save()
-
+    user_total = User.total()
+    if user_total == 0:
+        set_token = uuid.uuid4().hex
+        insert=User()
+        insert.access_token = set_token
+        insert.save()
+        print(set_token)
 except Exception as e:
     pass
 
@@ -83,7 +84,15 @@ async def paimon(content: str = '你好，我是派蒙。', speed: float = 1.0, 
             x_tst_lengths = torch.LongTensor([stn_tst.size(0)]).cpu()
             audio = net_g.infer(x_tst, x_tst_lengths, noise_scale=.667, noise_scale_w=0.8,
                                 length_scale=speed)[0][0, 0].data.cpu().float().numpy()
+        del stn_tst, x_tst, x_tst_lengths,history,audio_path,user
         sf.write(audio_path, audio, samplerate=hps.data.sampling_rate)
         return FileResponse(audio_path)
     else:
         raise HTTPException(status_code=401, detail="access_token error")
+
+@app.get("/api/paimon/total")
+async def paimon(access_token: Annotated[str | None, Header()] = None):
+    user = User.fetch_one('access_token=?', (access_token,))
+    history_total = VitsHistory.total('user_id=?', (int(user.id),))
+    print(history_total)
+    return {'count':history_total}
